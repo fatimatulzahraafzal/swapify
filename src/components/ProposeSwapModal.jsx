@@ -1,12 +1,24 @@
-// New file in L3
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { ValueHelperDisplay, getItemValue } from './ValueHelper';
 
 function ProposeSwapModal({ item, onClose, onSubmit }) {
-  const [name, setName] = useState(''); // New in L3: Controlled input with useState
-  const [contact, setContact] = useState(''); // New in L3: Controlled input with useState
-  const [proposal, setProposal] = useState(''); // New in L3: Controlled input with useState
+  const [name, setName] = useState('');
+  const [contact, setContact] = useState('');
+  const [proposal, setProposal] = useState('');
+  const [value, setValue] = useState(null);
+  const [loadingValue, setLoadingValue] = useState(true);
 
-  const handleSubmit = (e) => { // New in L3: Handle submit event
+  useEffect(() => {
+    const fetchValue = async () => {
+      setLoadingValue(true);
+      const val = await getItemValue(item);
+      setValue(val);
+      setLoadingValue(false);
+    };
+    fetchValue();
+  }, [item]);
+
+  const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(item.id, { name, contact, proposal });
   };
@@ -36,6 +48,13 @@ function ProposeSwapModal({ item, onClose, onSubmit }) {
             onChange={e => setProposal(e.target.value)}
             className="w-full p-2 border rounded mb-4"
           />
+          
+          {loadingValue ? (
+            <p className="text-gray-500 text-center">Fetching similar item prices...</p>
+          ) : (
+            <ValueHelperDisplay value={value} />
+          )}
+
           <div className="flex justify-end gap-2">
             <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">
               Cancel
@@ -49,4 +68,5 @@ function ProposeSwapModal({ item, onClose, onSubmit }) {
     </div>
   );
 }
+
 export default ProposeSwapModal;
