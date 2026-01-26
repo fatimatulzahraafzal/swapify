@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { supabase } from '../supabase';
 import Card from './Card';
 import AddItemModal from './AddItemModal';
+import EditItemModal from './EditItemModal';
 
 function Admin({ openItems, offers, user }) {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   // Update: Use user.id for owner_uid in insert
   const handleAddItem = async (newItem) => {
@@ -26,6 +29,26 @@ function Admin({ openItems, offers, user }) {
     } catch (error) {
       console.error('Error adding item:', error.message);
       alert('Failed to add item.');
+    }
+  };
+
+  const handleEditItem = async (updatedItem) => {
+    try {
+      const { error } = await supabase
+        .from('items')
+        .update({
+          title: updatedItem.title,
+          description: updatedItem.description,
+          accepts: updatedItem.accepts,
+          rating: Number(updatedItem.rating),
+          image_url: updatedItem.image_url,
+        })
+        .eq('id', selectedItem.id);
+      if (error) throw error;
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('Error updating item:', error.message);
+      alert('Failed to update item.');
     }
   };
 
@@ -97,14 +120,15 @@ function Admin({ openItems, offers, user }) {
             {...item}
             isOwner={true}
             offers={offers[item.id] || []}
-            // Update: Pass onAccept and onDecline props to Card
             onAccept={handleAccept}
             onDecline={handleDecline}
+            onEdit={() => { setSelectedItem(item); setShowEditModal(true); }}
           />
         ))}
       </div>
 
       {showAddModal && <AddItemModal onClose={() => setShowAddModal(false)} onSubmit={handleAddItem} />}
+      {showEditModal && (<EditItemModal item={selectedItem} onClose={() => setShowEditModal(false)} onSubmit={handleEditItem} />)}
     </section>
   );
 }

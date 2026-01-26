@@ -46,8 +46,8 @@ export function ValueHelperDisplay({ value }) {
   if (!value) return null;
 
   return (
-    <div className="mt-4 p-3 bg-green-50 rounded border border-green-200">
-      <p className="font-semibold text-green-800">Estimated Value (from sample marketplace data):</p>
+    <div className="mt-4 mb-4 p-3 bg-green-50 rounded border border-green-200">
+      <p className="font-semibold text-green-800">Estimated Value for "{value.query}" (from sample marketplace data):</p>
       <p className="text-lg font-bold">${value.low} – ${value.high}</p>
       <ul className="list-disc ml-5 mt-2 text-sm text-gray-700">
         {value.examples.map((ex, i) => (

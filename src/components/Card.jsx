@@ -1,4 +1,4 @@
-function Card({ type, id, image_url, title, rating, description, accepts, closed_at, summary, onProposeSwap, isOwner = false, offers = [], onAccept, onDecline }) {
+function Card({ type, id, image_url, title, rating, description, accepts, closed_at, summary, onProposeSwap, isOwner = false, offers = [], onAccept, onDecline, onEdit }) {
   const tags = accepts ? accepts.split(' or ').map(tag => tag.trim()) : [];
 
   return (
@@ -47,11 +47,9 @@ function Card({ type, id, image_url, title, rating, description, accepts, closed
                     <div key={offer.id} className="text-sm text-gray-700 mb-2 p-2 bg-gray-50 rounded border">
                       <strong>{offer.name}</strong> – {offer.contact} <br />
                       {offer.proposal} <br />
-                      {/*  Update: Display offer status with color coding */}
                       <span className={`font-bold ${offer.status === 'accepted' ? 'text-green-500' : offer.status === 'declined' ? 'text-red-500' : 'text-yellow-500'}`}>
                         {offer.status ? offer.status.toUpperCase() : 'PENDING'}
                       </span>
-                      {/* Added: Conditional buttons for pending offers */}
                       {offer.status === 'pending' && (
                         <div className="flex gap-2 mt-2">
                           <button onClick={() => onAccept(id, offer.id)} className="px-3 py-1 bg-green-500 text-white rounded">Accept</button>
@@ -63,7 +61,17 @@ function Card({ type, id, image_url, title, rating, description, accepts, closed
                 ) : (
                   <p className="text-sm text-gray-500">No offers yet</p>
                 )}
+
+                <button
+                onClick={onEdit}
+                className="mt-4 w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition font-medium"
+              >
+                Edit Item
+              </button>
+
+
               </div>
+              
             )}
           </>
         )}

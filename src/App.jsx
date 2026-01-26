@@ -16,22 +16,32 @@ function AppContent() {
 
   const [openItems, setOpenItems] = useState([]);
   const [closedTrades, setClosedTrades] = useState([]);
-  const [offers, setOffers] = useState({}); // Updated: Offers now fully synced with Supabase instead of partial local state
+  const [offers, setOffers] = useState({}); // Updated in L4: Offers now fully synced with Supabase instead of partial local state
   const [showLogin, setShowLogin] = useState(false);
+
+  const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const ownerUid = 'a7b30ceb-9131-4cad-a1e4-76f085f0eaa2'; // NEW: Hardcoded owner ID
+  const ownerUid = 'a7b30ceb-9131-4cad-a1e4-76f085f0eaa2';
 
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
+  // Updated in L4: Added real-time subscription for offers table to complete full data flow
   useEffect(() => {
     const openChannel = supabase.channel('open-items')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'items', filter: `owner_uid=eq.${ownerUid},status=eq.open` }, payload => {
-        fetchItems();
+        fetchItems(false); // Don't show loading screen for real-time updates
       })
       .subscribe();
 
     const closedChannel = supabase.channel('closed-items')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'items', filter: `owner_uid=eq.${ownerUid},status=eq.closed` }, payload => {
-        fetchItems();
+        fetchItems(false); // Don't show loading screen for real-time updates
       })
       .subscribe();
 
@@ -42,17 +52,24 @@ function AppContent() {
       .subscribe();
 
     fetchItems();
-    fetchOffers(); // Updated: Added initial fetch for offers from Supabase
+    fetchOffers(); // Updated in L4: Added initial fetch for offers from Supabase
+
+    // Polling fallback: refetch every 30 seconds to ensure data stays fresh
+    const pollInterval = setInterval(() => {
+      fetchItems(false); // Don't show loading screen for background updates
+      fetchOffers();
+    }, 30000);
 
     return () => {
       supabase.removeChannel(openChannel);
       supabase.removeChannel(closedChannel);
       supabase.removeChannel(offersChannel);
+      clearInterval(pollInterval);
     };
   }, []);
 
-  const fetchItems = async () => {
-    setLoading(true);
+  const fetchItems = async (showLoadingScreen = true) => {
+    if (showLoadingScreen) setLoading(true);
     try {
       const { data: open, error: errOpen } = await supabase
         .from('items')
@@ -76,11 +93,11 @@ function AppContent() {
     } catch (error) {
       console.error('Fetch items failed:', error);
     } finally {
-      setLoading(false);
+      if (showLoadingScreen) setLoading(false);
     }
   };
 
-  // Updated: Added async function to fetch and group offers from Supabase for full persistence
+  // Updated in L4: Added async function to fetch and group offers from Supabase for full persistence
   const fetchOffers = async () => {
     try {
       const { data, error } = await supabase
@@ -131,8 +148,8 @@ function AppContent() {
             <div className="text-center">Loading...</div>
           ) : (
           <Routes>
-            <Route path="/" element={<Home openItems={openItems} closedTrades={closedTrades} offers={offers} />} />
-            <Route path="/admin" element={isLoggedIn ? <Admin openItems={openItems} offers={offers} user={user} /> : <Navigate to="/" />} />
+            <Route path="/" element={<Home openItems={openItems} closedTrades={closedTrades} offers={offers} setMessage={setMessage} />} />
+            <Route path="/admin" element={isLoggedIn ? <Admin openItems={openItems} offers={offers} user={user} setMessage={setMessage} onRefresh={() => { fetchItems(); fetchOffers(); }} /> : <Navigate to="/" />} />
           </Routes>
           )}
         </div>
@@ -140,6 +157,11 @@ function AppContent() {
 
       <Footer />
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} onSubmit={handleLogin} />}
+      {message && (
+        <div className="fixed top-20 right-4 bg-green-500 text-white p-4 rounded shadow-lg z-50">
+          {message}
+        </div>
+      )}
     </div>
   );
 }
