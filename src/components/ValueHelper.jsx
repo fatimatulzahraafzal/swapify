@@ -1,4 +1,3 @@
-
 export async function getItemValue(item) {
   if (!item?.title) {
     return { low: 0, high: 0, examples: [] };

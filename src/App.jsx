@@ -16,7 +16,7 @@ function AppContent() {
 
   const [openItems, setOpenItems] = useState([]);
   const [closedTrades, setClosedTrades] = useState([]);
-  const [offers, setOffers] = useState({}); // Updated in L4: Offers now fully synced with Supabase instead of partial local state
+  const [offers, setOffers] = useState({});
   const [showLogin, setShowLogin] = useState(false);
 
   const [message, setMessage] = useState(null);
@@ -31,17 +31,24 @@ function AppContent() {
     }
   }, [message]);
 
-  // Updated in L4: Added real-time subscription for offers table to complete full data flow
+  // Refetch data whenever user logs in to ensure latest data is shown
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchItems();
+      fetchOffers();
+    }
+  }, [isLoggedIn]);
+
   useEffect(() => {
     const openChannel = supabase.channel('open-items')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'items', filter: `owner_uid=eq.${ownerUid},status=eq.open` }, payload => {
-        fetchItems(false); // Don't show loading screen for real-time updates
+        fetchItems();
       })
       .subscribe();
 
     const closedChannel = supabase.channel('closed-items')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'items', filter: `owner_uid=eq.${ownerUid},status=eq.closed` }, payload => {
-        fetchItems(false); // Don't show loading screen for real-time updates
+        fetchItems();
       })
       .subscribe();
 
@@ -52,24 +59,17 @@ function AppContent() {
       .subscribe();
 
     fetchItems();
-    fetchOffers(); // Updated in L4: Added initial fetch for offers from Supabase
-
-    // Polling fallback: refetch every 30 seconds to ensure data stays fresh
-    const pollInterval = setInterval(() => {
-      fetchItems(false); // Don't show loading screen for background updates
-      fetchOffers();
-    }, 30000);
+    fetchOffers(); 
 
     return () => {
       supabase.removeChannel(openChannel);
       supabase.removeChannel(closedChannel);
       supabase.removeChannel(offersChannel);
-      clearInterval(pollInterval);
     };
   }, []);
 
-  const fetchItems = async (showLoadingScreen = true) => {
-    if (showLoadingScreen) setLoading(true);
+  const fetchItems = async () => {
+    setLoading(true);
     try {
       const { data: open, error: errOpen } = await supabase
         .from('items')
@@ -93,11 +93,11 @@ function AppContent() {
     } catch (error) {
       console.error('Fetch items failed:', error);
     } finally {
-      if (showLoadingScreen) setLoading(false);
+      setLoading(false);
     }
   };
 
-  // Updated in L4: Added async function to fetch and group offers from Supabase for full persistence
+
   const fetchOffers = async () => {
     try {
       const { data, error } = await supabase
@@ -121,7 +121,6 @@ function AppContent() {
     }
   };
 
-  // Update: Change handleLogin to use email/password auth
   const handleLogin = async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
@@ -132,7 +131,6 @@ function AppContent() {
     }
   };
 
-  // Added: handleLogout using signOut
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/');

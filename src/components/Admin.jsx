@@ -4,7 +4,7 @@ import Card from './Card';
 import AddItemModal from './AddItemModal';
 import EditItemModal from './EditItemModal';
 
-function Admin({ openItems, offers, user }) {
+function Admin({ openItems, offers, user , setMessage, onRefresh}) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -24,33 +24,36 @@ function Admin({ openItems, offers, user }) {
           image_url: newItem.image_url,
         });
 
-      if (error) throw error;
-      setShowAddModal(false);
-    } catch (error) {
-      console.error('Error adding item:', error.message);
-      alert('Failed to add item.');
-    }
-  };
+        if (error) throw error;
+    setShowAddModal(false);
+    setMessage('Item added successfully!');
+    if (onRefresh) onRefresh(); // Refresh data after adding item
+  } catch (error) {
+    console.error('Error adding item:', error.message);
+    alert('Failed to add item. Check console for details.');
+  }};
 
   const handleEditItem = async (updatedItem) => {
-    try {
-      const { error } = await supabase
-        .from('items')
-        .update({
-          title: updatedItem.title,
-          description: updatedItem.description,
-          accepts: updatedItem.accepts,
-          rating: Number(updatedItem.rating),
-          image_url: updatedItem.image_url,
-        })
-        .eq('id', selectedItem.id);
-      if (error) throw error;
-      setShowEditModal(false);
-    } catch (error) {
-      console.error('Error updating item:', error.message);
-      alert('Failed to update item.');
-    }
-  };
+  try {
+    const { error } = await supabase
+      .from('items')
+      .update({
+        title: updatedItem.title,
+        description: updatedItem.description,
+        accepts: updatedItem.accepts,
+        rating: Number(updatedItem.rating),
+        image_url: updatedItem.image_url,
+      })
+      .eq('id', selectedItem.id);
+    if (error) throw error;
+    setShowEditModal(false);
+    setMessage('Item updated successfully!');
+    if (onRefresh) onRefresh(); // Refresh data after editing item
+  } catch (error) {
+    console.error('Error updating item:', error.message);
+    alert('Failed to update item.');
+  }
+};
 
   // Added: handleDecline for updating offer status
   const handleDecline = async (itemId, offerId) => {

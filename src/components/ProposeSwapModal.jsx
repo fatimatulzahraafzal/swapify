@@ -6,14 +6,11 @@ function ProposeSwapModal({ item, onClose, onSubmit }) {
   const [contact, setContact] = useState('');
   const [proposal, setProposal] = useState('');
   const [value, setValue] = useState(null);
-  const [loadingValue, setLoadingValue] = useState(true);
 
   useEffect(() => {
     const fetchValue = async () => {
-      setLoadingValue(true);
       const val = await getItemValue(item);
       setValue(val);
-      setLoadingValue(false);
     };
     fetchValue();
   }, [item]);
@@ -49,11 +46,7 @@ function ProposeSwapModal({ item, onClose, onSubmit }) {
             className="w-full p-2 border rounded mb-4"
           />
           
-          {loadingValue ? (
-            <p className="text-gray-500 text-center">Fetching similar item prices...</p>
-          ) : (
-            <ValueHelperDisplay value={value} />
-          )}
+          <ValueHelperDisplay value={value} />
 
           <div className="flex justify-end gap-2">
             <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">
