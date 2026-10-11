@@ -1,22 +1,19 @@
-function Card({ type, id, image_url, title, rating, description, accepts, closed_at, summary, onProposeSwap, isOwner = false, offers = [], onAccept, onDecline, onEdit }) {
+// Updated in L2: Added props onProposeSwap, isOwner, offers; in open type, wrapped button in !isOwner conditional (for role-based toggle)
+function Card({ type, image, title, rating, description, accepts, date, summary, onProposeSwap, isOwner = false, offers = [] }) { // New in L2: Added props for form integration and toggle
   const tags = accepts ? accepts.split(' or ').map(tag => tag.trim()) : [];
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg hover:scale-105 transition duration-300">
-      <img src={image_url || 'https://picsum.photos/300/200'} alt={title} className="w-full h-48 object-cover" />
-
+      <img src={image} alt={title} className="w-full h-48 object-cover" />
       <div className="p-6">
         <h3 className="text-xl font-semibold mb-3">{title}</h3>
-
         <div className="mb-3 flex items-center gap-2">
           <span className="text-sm text-gray-500">Condition:</span>
           <span className="text-yellow-400">
             {Array.from({ length: 5 }).map((_, i) => (i < rating ? '★' : '☆'))}
           </span>
         </div>
-
         <p className="text-gray-700 mb-4">{description}</p>
-
         {type === 'open' && (
           <>
             <div className="mb-5">
@@ -29,10 +26,9 @@ function Card({ type, id, image_url, title, rating, description, accepts, closed
                 ))}
               </div>
             </div>
-
-            {!isOwner && (
+            {!isOwner && ( // New in L2: Conditional for visitor propose button
               <button
-                onClick={onProposeSwap}
+                onClick={onProposeSwap} // New in L2: Added onClick for form trigger
                 className="w-full bg-green-500 text-white py-3 rounded hover:bg-green-600 transition font-medium"
               >
                 Propose Swap
@@ -41,44 +37,26 @@ function Card({ type, id, image_url, title, rating, description, accepts, closed
 
             {isOwner && (
               <div className="mt-4">
-                <h4 className="text-lg font-semibold mb-2">Offers ({offers.length})</h4>
-                {offers.length > 0 ? (
+                <h4 className="text-lg font-semibold mb-2">Offers: </h4>
+                { offers.length > 0 ? (
                   offers.map(offer => (
-                    <div key={offer.id} className="text-sm text-gray-700 mb-2 p-2 bg-gray-50 rounded border">
-                      <strong>{offer.name}</strong> – {offer.contact} <br />
-                      {offer.proposal} <br />
-                      <span className={`font-bold ${offer.status === 'accepted' ? 'text-green-500' : offer.status === 'declined' ? 'text-red-500' : 'text-yellow-500'}`}>
-                        {offer.status ? offer.status.toUpperCase() : 'PENDING'}
-                      </span>
-                      {offer.status === 'pending' && (
-                        <div className="flex gap-2 mt-2">
-                          <button onClick={() => onAccept(id, offer.id)} className="px-3 py-1 bg-green-500 text-white rounded">Accept</button>
-                          <button onClick={() => onDecline(id, offer.id)} className="px-3 py-1 bg-red-500 text-white rounded">Decline</button>
-                        </div>
-                      )}
+                    <div key={offer.id} className="text-sm text-gray-700 mb-1">
+                      {offer.name} - {offer.contact} - {offer.proposal}
                     </div>
                   ))
                 ) : (
                   <p className="text-sm text-gray-500">No offers yet</p>
-                )}
-
-                <button
-                onClick={onEdit}
-                className="mt-4 w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition font-medium"
-              >
-                Edit Item
-              </button>
-
-
+                )              
+              }                
               </div>
-              
             )}
+
+
           </>
         )}
-
         {type === 'closed' && (
           <>
-            <p className="text-sm text-gray-500 mb-2">Date: {new Date(closed_at).toLocaleDateString()}</p>
+            <p className="text-sm text-gray-500 mb-2">Date: {date}</p>
             <p className="text-gray-700">{summary}</p>
           </>
         )}
