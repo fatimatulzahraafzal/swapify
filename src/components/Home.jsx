@@ -12,6 +12,11 @@ function Home({ openItems, closedTrades, offers }) {
       .from('offers')
       .insert({ item_id: itemId, name: newOffer.name, contact: newOffer.contact, proposal: newOffer.proposal });
       if (error) throw error
+      setSelectedItem(null)
+    }
+    catch (error){
+      console.error('Error submitting offer: ', error.message)
+      alert('Failed to submit offer. Check console for details')
     }
   }
 
