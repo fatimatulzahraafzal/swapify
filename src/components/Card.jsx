@@ -1,20 +1,23 @@
-function Card({ type, image_url, title, rating, description, accepts, date, summary, onProposeSwap, isOwner = false, offers = [] }) {
+
+function Card({ type, image_url, title, rating, description, accepts, date, summary, onProposeSwap, isOwner = false, offers = [] , onAccept, onDecline}) {
   const tags = accepts ? accepts.split(' or ').map(tag => tag.trim()) : [];
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg hover:scale-105 transition duration-300">
-      <img src={image_url || 'https://picsum.photos/300/200' } alt={title} className="w-full h-48 object-cover" />
-     
+      <img src={image_url || 'https://picsum.photos/300/200'} alt={title} className="w-full h-48 object-cover" />
+
       <div className="p-6">
         <h3 className="text-xl font-semibold mb-3">{title}</h3>
-       
+
         <div className="mb-3 flex items-center gap-2">
           <span className="text-sm text-gray-500">Condition:</span>
           <span className="text-yellow-400">
             {Array.from({ length: 5 }).map((_, i) => (i < rating ? '★' : '☆'))}
           </span>
         </div>
-       
+
         <p className="text-gray-700 mb-4">{description}</p>
+
         {type === 'open' && (
           <>
             <div className="mb-5">
@@ -27,6 +30,7 @@ function Card({ type, image_url, title, rating, description, accepts, date, summ
                 ))}
               </div>
             </div>
+
             {!isOwner && (
               <button
                 onClick={onProposeSwap}
@@ -35,13 +39,27 @@ function Card({ type, image_url, title, rating, description, accepts, date, summ
                 Propose Swap
               </button>
             )}
+
             {isOwner && (
               <div className="mt-4">
-                <h4 className="text-lg font-semibold mb-2">Offers:</h4>
+                <h4 className="text-lg font-semibold mb-2">Offers ({offers.length})</h4>
                 {offers.length > 0 ? (
                   offers.map(offer => (
-                    <div key={offer.id} className="text-sm text-gray-700 mb-1">
-                      {offer.name} - {offer.contact} - {offer.proposal}
+                    <div key={offer.id} className="text-sm text-gray-700 mb-2 p-2 bg-gray-50 rounded">
+                      <strong>{offer.name}</strong> – {offer.contact}<br />
+                      {offer.proposal}
+                      <span className={`font-bold $offer.status === 'accepted' ? 'text-green-500' : offer.status === 'declined' ? 'text-red-500`}>
+                        {offer.status ? offer.status: 'PENDING'}
+                      </span>
+
+
+                      {offer.status === 'pending' && (
+                        <div className="flex gap-2 mt-2">
+                         <button onClick={() => onAccept(id, offer.id)} className="px-3 py-1 bg-green-500 text-white rounded">Accept</button>
+                          <button onClick={() => onDecline(id, offer.id)} className="px-3 py-1 bg-red-500 text-white rounded">Decline</button>
+                        </div>
+                      )}
+
                     </div>
                   ))
                 ) : (
@@ -51,6 +69,7 @@ function Card({ type, image_url, title, rating, description, accepts, date, summ
             )}
           </>
         )}
+
         {type === 'closed' && (
           <>
             <p className="text-sm text-gray-500 mb-2">Date: {date}</p>
@@ -61,4 +80,5 @@ function Card({ type, image_url, title, rating, description, accepts, date, summ
     </div>
   );
 }
+
 export default Card;
